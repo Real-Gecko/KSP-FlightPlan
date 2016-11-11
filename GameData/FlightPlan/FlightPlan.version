@@ -1,0 +1,17 @@
+{
+    "NAME"     : "Flight Plan",
+    "URL"      : "https://raw.githubusercontent.com/Real-Gecko/KSP-FlightPlan/master/GameData/FlightPlan/FlightPlan.version",
+    "DOWNLOAD" : "https://github.com/Real-Gecko/KSP-FlightPlan/releases",
+    "GITHUB" :
+    {
+        "USERNAME" : "Real-Gecko",
+        "REPOSITORY" : "KSP-FlightPlan"
+    },
+    "VERSION" :
+    {
+        "MAJOR" : 1,
+        "MINOR" : 0,
+        "PATCH" : 0,
+        "BUILD" : 0
+    }
+}
