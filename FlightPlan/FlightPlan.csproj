@@ -47,17 +47,19 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="UIF\Core.cs" />
-    <Compile Include="UIF\Layout.cs" />
-    <Compile Include="UIF\Palette.cs" />
-    <Compile Include="UIF\Styles.cs" />
     <Compile Include="FlightPlan.cs" />
     <Compile Include="Utils\ToolbarWrapper.cs" />
     <Compile Include="Utils\Format.cs" />
+    <Compile Include="Utils\KACWrapper.cs" />
+    <Compile Include="UIFramework\Core.cs" />
+    <Compile Include="UIFramework\Layout.cs" />
+    <Compile Include="UIFramework\Offsets.cs" />
+    <Compile Include="UIFramework\Palette.cs" />
+    <Compile Include="UIFramework\Styles.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    <Folder Include="UIF\" />
     <Folder Include="Utils\" />
+    <Folder Include="UIFramework\" />
   </ItemGroup>
 </Project>

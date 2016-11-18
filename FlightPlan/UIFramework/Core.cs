@@ -17,7 +17,7 @@ namespace FlightPlan
 			get { return _instance; }
 		}
 
-		private bool skinInitialized = false;
+		static private bool skinInitialized = false;
 
 		public void Awake() {
 			if (_instance != null) {
@@ -25,10 +25,6 @@ namespace FlightPlan
 				return;
 			}
 			_instance = this;
-		}
-
-		public void Start() {
-			DontDestroyOnLoad (this);
 		}
 
 		public void OnDestroy() {

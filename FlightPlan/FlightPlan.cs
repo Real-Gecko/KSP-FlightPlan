@@ -3,6 +3,8 @@ using UnityEngine;
 using System.Collections.Generic;
 using KSP.IO;
 using KSP.UI.Screens;
+using FlightPlan_KACWrapper;
+using System.Linq;
 
 namespace FlightPlan
 {
@@ -15,6 +17,9 @@ namespace FlightPlan
 			Maneuver,
 			Crater,
 			Burn,
+			SnacksLanded,
+			SnacksOrbit,
+			DivingCourse,
 			None
 		}
 
@@ -33,11 +38,15 @@ namespace FlightPlan
 
 		static private FlightPlan instance;
 
+		private bool	available = false;
 		private bool	active = false;
 		private bool	hidden = false;
 		private Rect	winRect = new Rect();
 		private int		winId;
-		protected bool	refresh = true;
+		private bool	refresh = true;
+		private bool	showAsUT = false;
+
+		private string	msgUpgrade = "Upgrade Tracking Station to access Flight Plan!";
 
 		private PluginConfiguration config;
 
@@ -56,46 +65,56 @@ namespace FlightPlan
 		}
 
 		private void Start() {
+			available = (PSystemSetup.Instance.GetSpaceCenterFacility ("TrackingStation").GetFacilityLevel () > 0);
 			lastTime = DateTime.Now;
 			config = PluginConfiguration.CreateForType<FlightPlan> ();
 			config.load ();
 
 			winId = GUIUtility.GetControlID (FocusType.Passive);
 			winRect = config.GetValue<Rect> (this.name, new Rect());
+			showAsUT = config.GetValue<bool> ("ut", false);
 
 			if (winRect.x == 0 && winRect.y == 0) {
 				winRect.center = new Vector2 (Screen.width / 2, Screen.height / 2);
 			}
 
-			GameEvents.onGUIApplicationLauncherReady.Add(onLauncherReady);
+			GameEvents.onGUIApplicationLauncherReady.Add(CreateLauncher);
 			GameEvents.onHideUI.Add (OnHide);
 			GameEvents.onShowUI.Add (OnUnHide);
 			GameEvents.onGamePause.Add (OnHide);
 			GameEvents.onGameUnpause.Add (OnUnHide);
+
+			KACWrapper.InitKACWrapper ();
+			if (KACWrapper.APIReady)
+				KACWrapper.KAC.onAlarmStateChanged += KACWrapper_KAC_onAlarmStateChanged;
 		}
 
 		private void OnDestroy()
 		{
 			config.SetValue (this.name, winRect);
+			config.SetValue ("showAsUT", showAsUT);
 			config.save ();
 
 			UnlockControls ();
 
 			DestroyLauncher ();
 
-			GameEvents.onGUIApplicationLauncherReady.Remove(onLauncherReady);
+			GameEvents.onGUIApplicationLauncherReady.Remove(CreateLauncher);
 			GameEvents.onHideUI.Remove (OnHide);
 			GameEvents.onShowUI.Remove (OnUnHide);
 			GameEvents.onGamePause.Remove (OnHide);
 			GameEvents.onGameUnpause.Remove (OnUnHide);
 
+			if (KACWrapper.APIReady)
+				KACWrapper.KAC.onAlarmStateChanged -= KACWrapper_KAC_onAlarmStateChanged;
+			
 			if (instance == this)
 				instance = null;
 		}
 
-		public void onLauncherReady()
+		void KACWrapper_KAC_onAlarmStateChanged (KACWrapper.KACAPI.AlarmStateChangedEventArgs e)
 		{
-			CreateLauncher ();
+
 		}
 
 		private void CreateLauncher() {
@@ -140,7 +159,10 @@ namespace FlightPlan
 
 		public void onAppTrue()
 		{
-			active = true;
+			if (!available)
+				ScreenMessages.PostScreenMessage (msgUpgrade);
+			else
+				active = true;
 		}
 
 		public void onAppFalse()
@@ -161,6 +183,11 @@ namespace FlightPlan
 
 		internal virtual void onToggle()
 		{
+			if (!available) {
+				ScreenMessages.PostScreenMessage (msgUpgrade);
+				return;
+			}
+
 			active = !active;
 			if (!active) {
 				refresh = true;
@@ -170,11 +197,13 @@ namespace FlightPlan
 
 		private void Update() {
 			// Refresh once per second to reduce garbage generation
-			if (lastTime.AddSeconds (1) > DateTime.Now)
+			if (lastTime.AddSeconds (1) > DateTime.Now || !active || hidden)
 				return;
+			
 			if (FlightGlobals.ActiveVessel != null) {
 				BuildFlightPlan (FlightGlobals.ActiveVessel);
 				refresh = true;
+				lastTime = DateTime.Now;
 			}
 		}
 
@@ -212,7 +241,7 @@ namespace FlightPlan
 			Vessel vessel = FlightGlobals.ActiveVessel;
 			GUILayout.BeginVertical (GUILayout.MinWidth(400));
 
-			if (FlightGlobals.ActiveVessel != null) {
+			if (vessel != null) {
 				Layout.Label ("Vessel:");
 				TargetFocusButton (vessel);
 
@@ -228,7 +257,9 @@ namespace FlightPlan
 				RenderFlightPlan ();
 			}
 
-			Layout.HR (10);
+			Layout.HR (5);
+			showAsUT = Layout.Toggle (showAsUT, "Universal Time");
+			Layout.HR (5);
 
 			if (Layout.Button ("Close", Palette.green)) {
 				if (appLauncherButton != null)
@@ -261,9 +292,19 @@ namespace FlightPlan
 		}
 
 		private void BuildFlightPlan(Vessel vessel) {
-			lastTime = DateTime.Now;
-
 			flightPlan.Clear ();
+
+			// Eat snacks while landed
+			if (vessel.situation == Vessel.Situations.LANDED || vessel.situation == Vessel.Situations.PRELAUNCH) {
+				flightPlan.Add (new PlanEntry (0, vessel.mainBody.MapObject, EntryType.SnacksLanded));
+				return;
+			}
+
+			// Diving course while splashed
+			if (vessel.situation == Vessel.Situations.SPLASHED) {
+				flightPlan.Add (new PlanEntry (0, vessel.mainBody.MapObject, EntryType.DivingCourse));
+				return;
+			}
 
 			int maneuverCount = vessel.patchedConicSolver.maneuverNodes.Count;
 
@@ -298,9 +339,13 @@ namespace FlightPlan
 					prev = patch.referenceBody;
 				}
 
+				// Assuming that burn in atmosphere is 60 seconds earlier than periapsis
+				// For entries order, but not for correct prediction 
 				if (patch.PeA <= patch.referenceBody.atmosphereDepth && patch.referenceBody.atmosphere) {
-					flightPlan.Add (new PlanEntry (patch.StartUT + patch.GetTimeToPeriapsis (), patch.referenceBody.MapObject, EntryType.Burn));
-				} else if (patch.PeA <= 0) {
+					flightPlan.Add (new PlanEntry (patch.StartUT + patch.GetTimeToPeriapsis () - 60, patch.referenceBody.MapObject, EntryType.Burn));
+				}
+
+				if (patch.PeA <= 0) {
 					ooopsUT = patch.StartUT + patch.GetTimeToPeriapsis ();
 					flightPlan.Add (new PlanEntry (ooopsUT, patch.referenceBody.MapObject, EntryType.Crater));
 					break;
@@ -319,13 +364,16 @@ namespace FlightPlan
 
 			// Sort by time
 			flightPlan.Sort ((s1, s2) => s1.UT.CompareTo (s2.UT));
+
+			// Nothing to do? Eat snacks!!!
+			if (flightPlan.Count == 0)
+				flightPlan.Add (new PlanEntry (0, vessel.mainBody.MapObject, EntryType.SnacksOrbit));
 		}
 
 		private void RenderFlightPlan() {
-			double UT = Planetarium.GetUniversalTime ();
 			double totalDeltaV = 0;
 			string text = "";
-			Color color = Palette.gray;
+			Color color = Palette.gray50;
 			foreach (PlanEntry entry in flightPlan) {
 				switch (entry.type) {
 				case EntryType.Encounter:
@@ -337,7 +385,7 @@ namespace FlightPlan
 					color = Color.white;
 					break;
 				case EntryType.Maneuver:
-					text = " maneuver ";
+					text = " perform maneuver ";
 					text += Format.Number (entry.magnitude, "m/s");
 					totalDeltaV += entry.magnitude;
 					color = Palette.yellow;
@@ -350,20 +398,91 @@ namespace FlightPlan
 					text = " make a new crater on " + entry.obj.celestialBody.theName;
 					color = Palette.red;
 					break;
+				case EntryType.SnacksLanded:
+					text = " eat snacks landed at " + entry.obj.celestialBody.theName;
+					color = Palette.yellow;
+					break;
+				case EntryType.DivingCourse:
+					text = " diving course in " + entry.obj.celestialBody.theName + "'s ocean";
+					color = Palette.yellow;
+					break;
+				case EntryType.SnacksOrbit:
+					text = " eat snacks orbiting " + entry.obj.celestialBody.theName;
+					color = Palette.yellow;
+					break;
 				}
-//				text += " in " + Format.Time (entry.UT - UT);
 				GUILayout.BeginHorizontal ();
-				Layout.LabelRight ("In " + Format.Time (entry.UT - UT), color, GUILayout.Width (150));
-				if (Layout.ButtonLeft (text, color, GUILayout.MinWidth(250))) {
+
+				if (entry.UT > 0) {
+					Layout.LabelRight (
+						(showAsUT ?
+							"At " + KSPUtil.dateTimeFormatter.PrintDateCompact (entry.UT, true, true) :
+							"In " + KSPUtil.dateTimeFormatter.PrintDateDeltaCompact (
+								entry.UT - Planetarium.GetUniversalTime(),
+								true,
+								true,
+								true
+							)
+						),
+						color,
+						GUILayout.Width (150)
+					);
+				}
+
+				if (Layout.ButtonLeft (text, color, GUILayout.MinWidth(230))) {
 					if (!MapView.MapIsEnabled)
 						MapView.EnterMapView ();
 					if (entry.obj != null)
 						PlanetariumCamera.fetch.SetTarget (entry.obj);
 				}
+
+				if (KACWrapper.APIReady) {
+					KACButton (entry, color, text);
+				}
+
 				GUILayout.EndHorizontal ();
 			}
 			Layout.HR (10);
 			Layout.LabelAndText ("Total Δv", Format.Number(totalDeltaV, "m/s"));
+		}
+
+		private void KACButton(PlanEntry entry, Color color, string text) {
+			KACWrapper.KACAPI.AlarmTypeEnum alarmType;
+			switch (entry.type) {
+			case EntryType.Encounter:
+				alarmType = KACWrapper.KACAPI.AlarmTypeEnum.SOIChange;
+				break;
+			case EntryType.Escape:
+				alarmType = KACWrapper.KACAPI.AlarmTypeEnum.SOIChange;
+				break;
+			case EntryType.Maneuver:
+				alarmType = KACWrapper.KACAPI.AlarmTypeEnum.Maneuver;
+				break;
+			case EntryType.Burn:
+				alarmType = KACWrapper.KACAPI.AlarmTypeEnum.Closest;
+				break;
+			case EntryType.Crater:
+				alarmType = KACWrapper.KACAPI.AlarmTypeEnum.Periapsis;
+				break;
+			default:
+				alarmType = KACWrapper.KACAPI.AlarmTypeEnum.Raw;
+				break;
+			}
+
+			if (Layout.Button ("A", color, GUILayout.Width (20))) {
+				String tmpID = KACWrapper.KAC.CreateAlarm(
+					alarmType,
+					FlightGlobals.ActiveVessel.vesselName,
+					entry.UT
+				);
+
+				KACWrapper.KACAPI.KACAlarm alarmNew = KACWrapper.KAC.Alarms.First(a => a.ID == tmpID);
+				alarmNew.Notes = FlightGlobals.ActiveVessel.vesselName + "\n" +
+					"Is about to " + text;
+				alarmNew.AlarmMargin = 600;
+				alarmNew.AlarmAction = KACWrapper.KACAPI.AlarmActionEnum.KillWarp;
+				alarmNew.VesselID = FlightGlobals.ActiveVessel.id.ToString ();
+			}
 		}
 	}
 }

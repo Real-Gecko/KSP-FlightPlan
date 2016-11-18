@@ -3,21 +3,19 @@
  * https://github.com/Real-Gecko/Unity5-UIFramework/blob/master/LICENSE.md
 */
 
-
 using System;
 using UnityEngine;
 
 namespace FlightPlan
 {
-	// Default layouting sucks
-	internal class Layout
+	public class Layout
 	{
 		/// <summary>
 		/// Styled label with white text color.
 		/// </summary>
 		/// <param name="text">Text.</param>
 		/// <param name="options">Options.</param>
-		internal static void Label(string text, params GUILayoutOption[] options) {
+		public static void Label(string text, params GUILayoutOption[] options) {
 			Styles.label.normal.textColor = Color.white;
 			Styles.label.alignment = TextAnchor.MiddleLeft;
 			Styles.label.stretchWidth = false;
@@ -30,7 +28,7 @@ namespace FlightPlan
 		/// <param name="text">Text.</param>
 		/// <param name="color">Color.</param>
 		/// <param name="options">Options.</param>
-		internal static void Label(string text, Color color, params GUILayoutOption[] options) {
+		public static void Label(string text, Color color, params GUILayoutOption[] options) {
 			Styles.label.normal.textColor = color;
 			Styles.label.alignment = TextAnchor.MiddleLeft;
 			Styles.label.stretchWidth = false;
@@ -42,7 +40,7 @@ namespace FlightPlan
 		/// </summary>
 		/// <param name="text">Text.</param>
 		/// <param name="options">Options.</param>
-		internal static void LabelCentered(string text, params GUILayoutOption[] options) {
+		public static void LabelCentered(string text, params GUILayoutOption[] options) {
 			Styles.label.normal.textColor = Color.white;
 			Styles.label.alignment = TextAnchor.MiddleCenter;
 			Styles.label.stretchWidth = true;
@@ -55,7 +53,7 @@ namespace FlightPlan
 		/// <param name="text">Text.</param>
 		/// <param name="color">Color.</param>
 		/// <param name="options">Options.</param>
-		internal static void LabelCentered(string text, Color color, params GUILayoutOption[] options) {
+		public static void LabelCentered(string text, Color color, params GUILayoutOption[] options) {
 			Styles.label.normal.textColor = color;
 			Styles.label.alignment = TextAnchor.MiddleCenter;
 			Styles.label.stretchWidth = true;
@@ -67,7 +65,7 @@ namespace FlightPlan
 		/// </summary>
 		/// <param name="text">Text.</param>
 		/// <param name="options">Options.</param>
-		internal static void LabelRight(string text, params GUILayoutOption[] options) {
+		public static void LabelRight(string text, params GUILayoutOption[] options) {
 			Styles.label.normal.textColor = Color.white;
 			Styles.label.alignment = TextAnchor.MiddleRight;
 			Styles.label.stretchWidth = false;
@@ -80,7 +78,7 @@ namespace FlightPlan
 		/// <param name="text">Text.</param>
 		/// <param name="color">Color.</param>
 		/// <param name="options">Options.</param>
-		internal static void LabelRight(string text, Color color, params GUILayoutOption[] options) {
+		public static void LabelRight(string text, Color color, params GUILayoutOption[] options) {
 			Styles.label.normal.textColor = color;
 			Styles.label.alignment = TextAnchor.MiddleRight;
 			Styles.label.stretchWidth = false;
@@ -92,7 +90,7 @@ namespace FlightPlan
 		/// </summary>
 		/// <param name="text">Text.</param>
 		/// <param name="options">Options.</param>
-		internal static bool Button(string text, params GUILayoutOption[] options) {
+		public static bool Button(string text, params GUILayoutOption[] options) {
 			Styles.button.normal.textColor = Color.white;
 			Styles.button.alignment = TextAnchor.MiddleCenter;
 			Styles.button.stretchWidth = true;
@@ -105,7 +103,7 @@ namespace FlightPlan
 		/// <param name="text">Text.</param>
 		/// <param name="color">Color.</param>
 		/// <param name="options">Options.</param>
-		internal static bool Button(string text, Color color, params GUILayoutOption[] options) {
+		public static bool Button(string text, Color color, params GUILayoutOption[] options) {
 			Styles.button.normal.textColor = color;
 			Styles.button.alignment = TextAnchor.MiddleCenter;
 			Styles.button.stretchWidth = true;
@@ -118,7 +116,7 @@ namespace FlightPlan
 		/// <returns><c>true</c>, if left was buttoned, <c>false</c> otherwise.</returns>
 		/// <param name="text">Text.</param>
 		/// <param name="options">Options.</param>
-		internal static bool ButtonLeft(string text, params GUILayoutOption[] options) {
+		public static bool ButtonLeft(string text, params GUILayoutOption[] options) {
 			Styles.button.normal.textColor = Color.white;
 			Styles.button.alignment = TextAnchor.MiddleLeft;
 			Styles.button.stretchWidth = true;
@@ -132,7 +130,7 @@ namespace FlightPlan
 		/// <param name="text">Text.</param>
 		/// <param name="color">Color.</param>
 		/// <param name="options">Options.</param>
-		internal static bool ButtonLeft(string text, Color color, params GUILayoutOption[] options) {
+		public static bool ButtonLeft(string text, Color color, params GUILayoutOption[] options) {
 			Styles.button.normal.textColor = color;
 			Styles.button.alignment = TextAnchor.MiddleLeft;
 			Styles.button.stretchWidth = true;
@@ -144,7 +142,7 @@ namespace FlightPlan
 		/// </summary>
 		/// <param name="label">Label.</param>
 		/// <param name="text">Text.</param>
-		internal static void LabelAndText(string label, string text) {
+		public static void LabelAndText(string label, string text) {
 			GUILayout.BeginHorizontal ();
 			Label (label + ": ", Palette.blue);
 			Label (text, Color.white);
@@ -155,7 +153,7 @@ namespace FlightPlan
 		/// Margin with the specified width.
 		/// </summary>
 		/// <param name="width">Width.</param>
-		internal static void Margin(int width) {
+		public static void Margin(int width) {
 			GUILayout.Label ("", Styles.label, GUILayout.Width(width));
 		}
 
@@ -165,14 +163,14 @@ namespace FlightPlan
 		/// <returns>The scroll view.</returns>
 		/// <param name="scrollPos">Scroll position.</param>
 		/// <param name="options">Options.</param>
-		internal static Vector2 BeginScrollView(Vector2 scrollPos, params GUILayoutOption[] options) {
+		public static Vector2 BeginScrollView(Vector2 scrollPos, params GUILayoutOption[] options) {
 			return GUILayout.BeginScrollView (scrollPos, false, true, Styles.verticalScrollbarThumb, Styles.verticalScrollbarThumb, Styles.scrollView, options);
 		}
 
 		/// <summary>
 		/// Horizontal separator of the specified height
 		/// </summary>
-		internal static void HR(int height = 20) {
+		public static void HR(int height = 20) {
 			GUILayout.Label ("", Styles.label, GUILayout.Height(height));
 		}
 
@@ -184,11 +182,11 @@ namespace FlightPlan
 		/// <param name="captions">Captions.</param>
 		/// <param name="count">Count.</param>
 		/// <param name="options">Options.</param>
-		internal static int SelectionGrid(int selected, string[] captions, int count, params GUILayoutOption[] options) {
+		public static int SelectionGrid(int selected, string[] captions, int count, params GUILayoutOption[] options) {
 			return GUILayout.SelectionGrid (selected, captions, count, Styles.selectionGrid, options);
 		}
 
-		internal static bool Toggle(bool value, string text, params GUILayoutOption[] options) {
+		public static bool Toggle(bool value, string text, params GUILayoutOption[] options) {
 			string prefix = value ? "● " : "○ ";
 			return GUILayout.Toggle (value, prefix + text, Styles.toggle, options);
 		}
@@ -201,7 +199,7 @@ namespace FlightPlan
 		/// <param name="func">Func.</param>
 		/// <param name="title">Title.</param>
 		/// <param name="options">Options.</param>
-		internal static Rect Window(int id, Rect screenRect, GUI.WindowFunction func, string title, params GUILayoutOption[] options) {
+		public static Rect Window(int id, Rect screenRect, GUI.WindowFunction func, string title, params GUILayoutOption[] options) {
 			// Fix rect width and height not being integers to avoid blurry font rendering
 			screenRect.width = (float)Math.Floor (screenRect.width);
 			screenRect.height = (float)Math.Floor (screenRect.height);
