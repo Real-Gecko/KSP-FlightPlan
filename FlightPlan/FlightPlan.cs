@@ -377,11 +377,11 @@ namespace FlightPlan
 			foreach (PlanEntry entry in flightPlan) {
 				switch (entry.type) {
 				case EntryType.Encounter:
-					text = " encounter " + entry.obj.celestialBody.theName;
+					text = " encounter " + entry.obj.celestialBody.RevealName ();
 					color = Palette.green;
 					break;
 				case EntryType.Escape:
-					text = " escape to " + entry.obj.celestialBody.theName;
+					text = " escape to " + entry.obj.celestialBody.RevealName ();
 					color = Color.white;
 					break;
 				case EntryType.Maneuver:
@@ -391,23 +391,23 @@ namespace FlightPlan
 					color = Palette.yellow;
 					break;
 				case EntryType.Burn:
-					text = " burn in " + entry.obj.celestialBody.theName + "'s atmosphere";
+					text = " burn in " + entry.obj.celestialBody.RevealName () + "'s atmosphere";
 					color = Palette.red;
 					break;
 				case EntryType.Crater:
-					text = " make a new crater on " + entry.obj.celestialBody.theName;
+					text = " make a new crater on " + entry.obj.celestialBody.RevealName ();
 					color = Palette.red;
 					break;
 				case EntryType.SnacksLanded:
-					text = " eat snacks landed at " + entry.obj.celestialBody.theName;
+					text = " eat snacks landed at " + entry.obj.celestialBody.RevealName ();
 					color = Palette.yellow;
 					break;
 				case EntryType.DivingCourse:
-					text = " diving course in " + entry.obj.celestialBody.theName + "'s ocean";
+					text = " diving course in " + entry.obj.celestialBody.RevealName () + "'s ocean";
 					color = Palette.yellow;
 					break;
 				case EntryType.SnacksOrbit:
-					text = " eat snacks orbiting " + entry.obj.celestialBody.theName;
+					text = " eat snacks orbiting " + entry.obj.celestialBody.RevealName ();
 					color = Palette.yellow;
 					break;
 				}
