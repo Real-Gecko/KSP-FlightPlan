@@ -4,6 +4,12 @@ This mod uses KACWrapper.cs by [TriggerAu](https://github.com/TriggerAu)
 This mod uses ToolbarWrapper.cs by [Maik Schreiber](https://github.com/blizzy78)
 
 ## Changelog
+### Version 1.0.3
+- Recompile for KSP 1.3.1
+
+### Version 1.0.2
+- Recompile for KSP 1.3.0
+
 ### Version 1.0.1
 - Fixed NRE raised when Tracking Station is level 1, message will appear advicing to to upgrade it.
 - Predict potential crash after entering celestial body atmosphere
