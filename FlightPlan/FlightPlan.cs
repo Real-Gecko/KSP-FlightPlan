@@ -28,7 +28,8 @@ namespace FlightPlan
 			internal MapObject obj;
 			internal EntryType type;
 			internal double magnitude;
-			internal PlanEntry(double UT, MapObject obj, EntryType type = EntryType.None, double magnitude = 0) {
+			internal PlanEntry (double UT, MapObject obj, EntryType type = EntryType.None, double magnitude = 0)
+			{
 				this.UT = UT;
 				this.obj = obj;
 				this.type = type;
@@ -55,6 +56,7 @@ namespace FlightPlan
 
 		private ApplicationLauncherButton appLauncherButton;
 		private IButton toolbarButton;
+		private UICore.UICore UI;
 
 		public void Awake() {
 			if (instance != null) {
@@ -70,13 +72,12 @@ namespace FlightPlan
 			config = PluginConfiguration.CreateForType<FlightPlan> ();
 			config.load ();
 
-			winId = GUIUtility.GetControlID (FocusType.Passive);
-			winRect = config.GetValue<Rect> (this.name, new Rect());
-			showAsUT = config.GetValue<bool> ("ut", false);
+			UI = new UICore.UICore ();
+			UI.LoadConfig ("GameData/FlightPlan/Skin/FlightPlan.cfg");
 
-			if (winRect.x == 0 && winRect.y == 0) {
-				winRect.center = new Vector2 (Screen.width / 2, Screen.height / 2);
-			}
+			winId = GUIUtility.GetControlID (FocusType.Passive);
+			winRect = config.GetValue<Rect> (this.name, new Rect (0, 0, Screen.width / 2, Screen.height / 2));
+			showAsUT = config.GetValue<bool> ("showAsUT", false);
 
 			GameEvents.onGUIApplicationLauncherReady.Add(CreateLauncher);
 			GameEvents.onHideUI.Add (OnHide);
@@ -216,7 +217,7 @@ namespace FlightPlan
 					refresh = false;
 				}
 
-				winRect = Layout.Window (winId, winRect, RenderWindow, "Flight Plan");
+				winRect = UI.Layout.Window (winId, winRect, RenderWindow, "Flight Plan");
 
 				if (winRect.Contains (Event.current.mousePosition)) {
 					LockControls ();
@@ -242,26 +243,26 @@ namespace FlightPlan
 			GUILayout.BeginVertical (GUILayout.MinWidth(400));
 
 			if (vessel != null) {
-				Layout.Label ("Vessel:");
+				UI.Layout.Label ("Vessel:");
 				TargetFocusButton (vessel);
 
-				Layout.Label ("Current SOI:");
+				UI.Layout.Label ("Current SOI:");
 				TargetFocusButton (vessel.mainBody);
 
 				if (vessel.targetObject != null) {
-					Layout.Label ("Target:");
+					UI.Layout.Label ("Target:");
 					TargetFocusButton (vessel.targetObject);
 				}
 
-				Layout.Label ("Plan entries:", Palette.blue);
+				UI.Layout.Label ("Plan entries:", UI.Palette.Col ("blue"));
 				RenderFlightPlan ();
 			}
 
-			Layout.HR (5);
-			showAsUT = Layout.Toggle (showAsUT, "Universal Time");
-			Layout.HR (5);
+			UI.Layout.HR (5);
+			showAsUT = UI.Layout.Toggle (showAsUT, "Universal Time");
+			UI.Layout.HR (5);
 
-			if (Layout.Button ("Close", Palette.green)) {
+			if (UI.Layout.Button ("Close", UI.Palette.Col ("green"))) {
 				if (appLauncherButton != null)
 					appLauncherButton.SetFalse ();
 				else
@@ -283,9 +284,9 @@ namespace FlightPlan
 			}
 
 			if (mo != null) {
-				if (Layout.Button (mo.Discoverable.RevealName (), Palette.green)) {
+				if (UI.Layout.Button (mo.Discoverable.RevealName (), UI.Palette.Col ("green"))) {
 					if (HighLogic.LoadedSceneIsFlight)
-						MapView.EnterMapView();						
+						MapView.EnterMapView ();
 					PlanetariumCamera.fetch.SetTarget (mo);
 				}
 			}
@@ -332,9 +333,9 @@ namespace FlightPlan
 
 				if (patch.referenceBody != prev) {
 					if (patch.referenceBody == prev.referenceBody)
-						flightPlan.Add(new PlanEntry(patch.StartUT, patch.referenceBody.MapObject, EntryType.Escape));
+						flightPlan.Add (new PlanEntry (patch.StartUT, patch.referenceBody.MapObject, EntryType.Escape));
 					else
-						flightPlan.Add(new PlanEntry(patch.StartUT, patch.referenceBody.MapObject, EntryType.Encounter));
+						flightPlan.Add (new PlanEntry (patch.StartUT, patch.referenceBody.MapObject, EntryType.Encounter, patch.PeA));
 
 					prev = patch.referenceBody;
 				}
@@ -373,12 +374,12 @@ namespace FlightPlan
 		private void RenderFlightPlan() {
 			double totalDeltaV = 0;
 			string text = "";
-			Color color = Palette.gray50;
+			Color color = UI.Palette.Col ("gray");
 			foreach (PlanEntry entry in flightPlan) {
 				switch (entry.type) {
 				case EntryType.Encounter:
-					text = " encounter " + entry.obj.celestialBody.RevealName ();
-					color = Palette.green;
+					text = " encounter " + entry.obj.celestialBody.RevealName () + " (" + Format.Number (entry.magnitude, "m") + ")";
+					color = UI.Palette.Col ("green");
 					break;
 				case EntryType.Escape:
 					text = " escape to " + entry.obj.celestialBody.RevealName ();
@@ -388,33 +389,33 @@ namespace FlightPlan
 					text = " perform maneuver ";
 					text += Format.Number (entry.magnitude, "m/s");
 					totalDeltaV += entry.magnitude;
-					color = Palette.yellow;
+					color = UI.Palette.Col ("yellow");
 					break;
 				case EntryType.Burn:
 					text = " burn in " + entry.obj.celestialBody.RevealName () + "'s atmosphere";
-					color = Palette.red;
+					color = UI.Palette.Col ("red");
 					break;
 				case EntryType.Crater:
 					text = " make a new crater on " + entry.obj.celestialBody.RevealName ();
-					color = Palette.red;
+					color = UI.Palette.Col ("red");
 					break;
 				case EntryType.SnacksLanded:
 					text = " eat snacks landed at " + entry.obj.celestialBody.RevealName ();
-					color = Palette.yellow;
+					color = UI.Palette.Col ("yellow");
 					break;
 				case EntryType.DivingCourse:
 					text = " diving course in " + entry.obj.celestialBody.RevealName () + "'s ocean";
-					color = Palette.yellow;
+					color = UI.Palette.Col ("yellow");
 					break;
 				case EntryType.SnacksOrbit:
 					text = " eat snacks orbiting " + entry.obj.celestialBody.RevealName ();
-					color = Palette.yellow;
+					color = UI.Palette.Col ("yellow");
 					break;
 				}
 				GUILayout.BeginHorizontal ();
 
 				if (entry.UT > 0) {
-					Layout.LabelRight (
+					UI.Layout.LabelRight (
 						(showAsUT ?
 							"At " + KSPUtil.dateTimeFormatter.PrintDateCompact (entry.UT, true, true) :
 							"In " + KSPUtil.dateTimeFormatter.PrintDateDeltaCompact (
@@ -429,7 +430,7 @@ namespace FlightPlan
 					);
 				}
 
-				if (Layout.ButtonLeft (text, color, GUILayout.MinWidth(230))) {
+				if (UI.Layout.ButtonLeft (text, color, GUILayout.MinWidth(230))) {
 					if (!MapView.MapIsEnabled)
 						MapView.EnterMapView ();
 					if (entry.obj != null)
@@ -442,8 +443,8 @@ namespace FlightPlan
 
 				GUILayout.EndHorizontal ();
 			}
-			Layout.HR (10);
-			Layout.LabelAndText ("Total Δv", Format.Number(totalDeltaV, "m/s"));
+			UI.Layout.HR (10);
+			UI.Layout.LabelAndText ("Total Δv", Format.Number(totalDeltaV, "m/s"), UI.Palette.Col("blue"), Color.white);
 		}
 
 		private void KACButton(PlanEntry entry, Color color, string text) {
@@ -469,11 +470,11 @@ namespace FlightPlan
 				break;
 			}
 
-			if (Layout.Button ("A", color, GUILayout.Width (20))) {
+			if (UI.Layout.Button ("A", color, GUILayout.Width (20))) {
 				String tmpID = KACWrapper.KAC.CreateAlarm(
 					alarmType,
 					FlightGlobals.ActiveVessel.vesselName,
-					entry.UT
+					entry.UT - 600
 				);
 
 				KACWrapper.KACAPI.KACAlarm alarmNew = KACWrapper.KAC.Alarms.First(a => a.ID == tmpID);
@@ -482,6 +483,7 @@ namespace FlightPlan
 				alarmNew.AlarmMargin = 600;
 				alarmNew.AlarmAction = KACWrapper.KACAPI.AlarmActionEnum.KillWarp;
 				alarmNew.VesselID = FlightGlobals.ActiveVessel.id.ToString ();
+				ScreenMessages.PostScreenMessage ("KAC alarm added for " + FlightGlobals.ActiveVessel.vesselName);
 			}
 		}
 	}

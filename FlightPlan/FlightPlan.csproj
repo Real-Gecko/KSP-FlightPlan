@@ -27,11 +27,23 @@
     <ConsolePause>false</ConsolePause>
     <CustomCommands>
       <CustomCommands>
-        <Command type="AfterBuild" command="cp ${TargetFile} /home/realgecko/Development/KSP/GameData/${ProjectName}" />
-        <Command type="AfterBuild" command="cp ${TargetFile} ${SolutionDir}/GameData/${ProjectName}" />
-        <Command type="Execute" command="/usr/bin/wine /home/realgecko/Development/KSP/KSP_x64.exe" workingdir="/home/realgecko/Development/KSP/" />
+        <Command>
+          <type>AfterBuild</type>
+          <command>cp ${TargetFile} /home/realgecko/Development/KSP/GameData/${ProjectName}</command>
+        </Command>
+        <Command>
+          <type>AfterBuild</type>
+          <command>cp ${TargetFile} ${SolutionDir}/GameData/${ProjectName}</command>
+        </Command>
       </CustomCommands>
     </CustomCommands>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(RunConfiguration)' == 'Default' ">
+    <StartAction>Program</StartAction>
+    <StartProgram>..\..\..\..\..\usr\bin\wine</StartProgram>
+    <StartArguments>/home/realgecko/Development/KSP/KSP_x64.exe</StartArguments>
+    <StartWorkingDirectory>..\..\KSP\</StartWorkingDirectory>
+    <ConsolePause>false</ConsolePause>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -41,6 +53,9 @@
     <Reference Include="UnityEngine">
       <HintPath>..\..\KSP\KSP_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
+    <Reference Include="UICore">
+      <HintPath>..\..\UICore\GameData\000_UICore\UICore.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -48,15 +63,9 @@
     <Compile Include="Utils\ToolbarWrapper.cs" />
     <Compile Include="Utils\Format.cs" />
     <Compile Include="Utils\KACWrapper.cs" />
-    <Compile Include="UIFramework\Core.cs" />
-    <Compile Include="UIFramework\Layout.cs" />
-    <Compile Include="UIFramework\Offsets.cs" />
-    <Compile Include="UIFramework\Palette.cs" />
-    <Compile Include="UIFramework\Styles.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Folder Include="Utils\" />
-    <Folder Include="UIFramework\" />
   </ItemGroup>
 </Project>

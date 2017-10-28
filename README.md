@@ -4,6 +4,14 @@ This mod uses KACWrapper.cs by [TriggerAu](https://github.com/TriggerAu)
 This mod uses ToolbarWrapper.cs by [Maik Schreiber](https://github.com/blizzy78)
 
 ## Changelog
+### Version 1.0.4
+- Switched to UICore for GUI drawing
+- KAC alarm will be set -10 minutes before plan entry
+- Screen message will apperar after alarm creation
+- Fixed showAsUT config parameter not being read correctly
+- Periapsis is shown on "Encounter" entry type
+- Made doubles formatting a little bit saner
+
 ### Version 1.0.3
 - Recompile for KSP 1.3.1
 
